@@ -3,3 +3,5 @@ Flask-SQLAlchemy
 psycopg2-binary
 PyMuPDF
 Pillow
+google-generativeai
+python-dotenv
