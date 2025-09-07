@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.venv/
+
+# Uploaded files
+# This folder is generated dynamically to store images from PDFs.
+/app/static/uploads/
+
+# IDE configuration
+.idea/
+.vscode/
