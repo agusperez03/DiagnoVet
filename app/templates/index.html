@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiagnoVET</title>
+    <link href="{{ url_for('static', filename='lightbox2/css/lightbox.min.css') }}" rel="stylesheet" />
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 40px auto; background-color: #f4f7f6; color: #333; }
+        h1, h2, h3, h4 { color: #005f73; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        form { margin-bottom: 20px; padding: 20px; border: 2px dashed #00a896; border-radius: 5px; background: #e9f5f4; }
+        button { background-color: #00a896; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #007f72; }
+        #status { margin-top: 10px; font-weight: bold; }
+        .report-card { border: 1px solid #ddd; border-left: 5px solid #00a896; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
+        .report-card h3 { margin-top: 0; }
+        .report-card pre { white-space: pre-wrap; background-color: #eee; padding: 10px; border-radius: 4px; }
+        
+        /* Estilos para la galería de imágenes */
+        .report-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .report-images img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .report-images img:hover {
+            transform: scale(1.05);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔬 DiagnoVET</h1>
+    <p>Sube uno o más reportes en formato PDF para extraer la información automáticamente.</p>
+
+    <form id="uploadForm">
+        <input type="file" id="fileInput" name="files" multiple required accept=".pdf">
+        <button type="submit">Procesar Archivos</button>
+        <div id="status"></div>
+    </form>
+
+    <h2>Reportes Procesados</h2>
+    <div id="report-list">
+        <p>Cargando reportes...</p>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='lightbox2/js/lightbox-plus-jquery.min.js') }}"></script>
+<script>
+    lightbox.option({
+        'resizeDuration': 200,
+        'wrapAround': true,
+        'alwaysShowNavOnTouchDevices': true // Útil para móviles
+    })
+
+    const uploadForm = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const statusDiv = document.getElementById('status');
+    const reportListDiv = document.getElementById('report-list');
+
+    // Función para obtener y mostrar los reportes
+    async function fetchAndDisplayReports() {
+        try {
+            const response = await fetch('/api/reports');
+            if (!response.ok) throw new Error('Error al cargar los reportes');
+            
+            const reports = await response.json();
+            reportListDiv.innerHTML = ''; // Limpiar la lista
+
+            if (reports.length === 0) {
+                reportListDiv.innerHTML = '<p>Aún no hay reportes procesados.</p>';
+                return;
+            }
+
+            reports.forEach(report => {
+                const card = document.createElement('div');
+                card.className = 'report-card';
+
+                let imagesHTML = '<div class="report-images">';
+                if (report.imagenes && report.imagenes.length > 0) {
+                    report.imagenes.forEach(img => {
+                        // --- CAMBIO IMPORTANTE AQUÍ ---
+                        // Envolvemos la imagen en un enlace con data-lightbox
+                        imagesHTML += `
+                            <a href="${img.url}" data-lightbox="reporte-${report.id}" data-title="${report.nombre_archivo}">
+                                <img src="${img.url}" alt="Imagen del reporte">
+                            </a>
+                        `;
+                    });
+                }
+                imagesHTML += '</div>';
+
+                card.innerHTML = `
+                    <h3>${report.nombre_archivo}</h3>
+                    <p><strong>Paciente:</strong> ${report.paciente_nombre || 'No extraído'}</p>
+                    <p><strong>Tutor:</strong> ${report.tutor_nombre || 'No extraído'}</p>
+                    <p><strong>Veterinario:</strong> ${report.veterinario_nombre || 'No extraído'}</p>
+                    <h4>Diagnóstico:</h4>
+                    <pre>${report.diagnostico || 'No extraído'}</pre>
+                    <h4>Recomendaciones:</h4>
+                    <pre>${report.recomendaciones || 'No extraído'}</pre>
+                    <h4>Imágenes Adjuntas:</h4>
+                    ${imagesHTML} 
+                `;
+                reportListDiv.appendChild(card);
+            });
+
+        } catch (error) {
+            reportListDiv.innerHTML = `<p style="color: red;">${error.message}</p>`;
+        }
+    }
+
+    // Event listener para el envío del formulario
+    uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData();
+        for (const file of fileInput.files) {
+            formData.append('files', file);
+        }
+
+        statusDiv.textContent = 'Procesando...';
+        statusDiv.style.color = '#005f73';
+
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Ocurrió un error desconocido');
+            }
+            
+            statusDiv.textContent = result.message;
+            statusDiv.style.color = 'green';
+            fileInput.value = null; // Limpiar el input de archivos
+
+            // Refrescar la lista de reportes
+            await fetchAndDisplayReports();
+
+        } catch (error) {
+            statusDiv.textContent = `Error: ${error.message}`;
+            statusDiv.style.color = 'red';
+        }
+    });
+
+    // Cargar los reportes iniciales cuando la página se carga
+    document.addEventListener('DOMContentLoaded', fetchAndDisplayReports);
+</script>
+
+</body>
+</html>
