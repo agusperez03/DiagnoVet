@@ -1,13 +1,7 @@
 services:
-  # --- 1. El Servicio de la Base de Datos PostgreSQL ---
-  - type: pserv
-    name: diagnovet-db
-    plan: free # Plan gratuito. Los datos se borrarán tras 90 días de inactividad.
-
-  # --- 2. El Servicio de la Aplicación Web con Flask ---
   - type: web
     name: diagnovet-app
-    env: python
+    runtime: python
     plan: free
     buildCommand: |
       pip install -r requirements.txt
@@ -15,9 +9,12 @@ services:
     startCommand: "gunicorn run:app"
     envVars:
       - key: DATABASE_URL
-        fromService:
-          type: pserv
+        fromDatabase:
           name: diagnovet-db
           property: connectionString
       - key: GOOGLE_API_KEY
         sync: false
+
+databases:
+  - name: diagnovet-db
+    plan: free
