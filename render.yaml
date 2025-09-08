@@ -8,7 +8,7 @@ services:
     # Plan gratuito. Los datos se borrarán después de 90 días de inactividad.
     plan: free 
     # Asegúrate de que la versión coincida con la que usaste localmente si es posible
-    postgresMajorVersion: 14 
+    version: 14 
 
   # --- 2. El Servicio de la Aplicación Web con Flask ---
   - type: web
