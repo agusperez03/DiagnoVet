@@ -4,8 +4,9 @@ services:
   # --- 1. El Servicio de la Base de Datos PostgreSQL ---
   - type: pserv # Base de datos persistente
     name: diagnovet-db
-    env: postgres
-    plan: free # Plan gratuito. Los datos se borrarán después de 90 días de inactividad.
+    runtime: postgres
+    # Plan gratuito. Los datos se borrarán después de 90 días de inactividad.
+    plan: free
 
   # --- 2. El Servicio de la Aplicación Web con Flask ---
   - type: web
@@ -25,7 +26,7 @@ services:
         fromService:
           type: pserv
           name: diagnovet-db
-          property: connectionStringStandard
+          property: connectionString
       # Variable para la clave de API de Gemini
       - key: GOOGLE_API_KEY
-        sync: false # La gestionaremos manualmente como un secreto
+        sync: false # Le decimos a Render que la gestionaremos manualmente como un secreto
