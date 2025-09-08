@@ -1,32 +1,23 @@
-# Define los servicios que componen la aplicación DiagnoVET
-
 services:
   # --- 1. El Servicio de la Base de Datos PostgreSQL ---
-  - type: pserv # Base de datos persistente
+  - type: pserv
     name: diagnovet-db
-    runtime: postgres
-    # Plan gratuito. Los datos se borrarán después de 90 días de inactividad.
-    plan: free
+    plan: free # Plan gratuito. Los datos se borrarán tras 90 días de inactividad.
 
   # --- 2. El Servicio de la Aplicación Web con Flask ---
   - type: web
     name: diagnovet-app
     runtime: python
-    plan: free # Plan gratuito para el servicio web
-    # Comando para instalar las dependencias
+    plan: free
     buildCommand: |
       pip install -r requirements.txt
-      # Comando para crear las tablas de la BD en el primer despliegue
       flask shell -c "from app.models import db; db.create_all()"
-    # Comando para iniciar la aplicación en producción con Gunicorn
     startCommand: "gunicorn run:app"
     envVars:
-      # Variable de entorno para la URL de la base de datos
       - key: DATABASE_URL
         fromService:
           type: pserv
           name: diagnovet-db
           property: connectionString
-      # Variable para la clave de API de Gemini
       - key: GOOGLE_API_KEY
-        sync: false # Le decimos a Render que la gestionaremos manualmente como un secreto
+        sync: false
