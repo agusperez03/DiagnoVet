@@ -7,11 +7,11 @@ services:
   # --- 2. El Servicio de la Aplicación Web con Flask ---
   - type: web
     name: diagnovet-app
-    runtime: python
+    env: python
     plan: free
     buildCommand: |
       pip install -r requirements.txt
-      flask shell -c "from app.models import db; db.create_all()"
+      python -c "from app.models import db; from run import app; app.app_context().push(); db.create_all()"
     startCommand: "gunicorn run:app"
     envVars:
       - key: DATABASE_URL
