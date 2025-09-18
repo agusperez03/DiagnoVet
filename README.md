@@ -13,6 +13,11 @@ En DiagnoVET estamos transformando la medicina veterinaria con inteligencia arti
 
 ---
 
+## Deployed - onrender
+https://diagnovet-app.onrender.com
+
+---
+
 ## ✨ Características Principales
 
 * **Carga de Múltiples Archivos:** Sube uno o más reportes veterinarios en formato PDF simultáneamente.
